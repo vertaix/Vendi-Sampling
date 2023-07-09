@@ -5,6 +5,12 @@
 This repository contains the implementation of Vendi Sampling, a method for 
 increasing the efficiency and efficacy of the exploration of molecular conformation spaces. In Vendi sampling, molecular replicas are simulated in parallel and coupled via a global statistical measure, the Vendi Score, to enhance diversity.
 
+![](PrinzPotential.gif)
+
+<p style="text-align:center">
+<em>Vendi Sampling enables faster exploration than Replica Sampling<em>
+</p>
+
 For more information, see [our pre-print on ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/64a2f0abba3e99daef73a144)
 
 ## Installation
@@ -19,13 +25,13 @@ Note: We use a modified version of the [REFORM repository](https://github.com/no
 
 ## Usage
 
-We provide implementations of Vendi Sampling both in Toy (User-defined Energy functions) and Molecular Settings. 
+We provide implementations of Vendi Sampling both in Model systems (with User-defined Energy functions) and Molecular Settings. 
 
-### Vendi Sampler for User-Defined Energy Functions
+### Vendi Sampler for Model Systems
 
 First, define an Energy callable function.
 
-`ToySettings/model_systems.py` contains classes for the Prinz & Double Well Potential functions. 
+`Model_Systems/model_systems.py` contains classes for the Prinz & Double Well Potential functions. 
 
 ```
 Prinz = PrinzEnergy()
@@ -41,9 +47,9 @@ x_init = torch.rand((replicas, dim), requires_grad=True)
 samples, weights = VendiSamp(E, logvendi_loss, steps=10000, x_init=x_init)
 ```
 
-In `ToySettings/main.py` we perform hyperparameter optimization. 
+In `Model_Systems/main.py` we perform hyperparameter optimization. 
 
-### Vendi Sampler for Molecular Simulations
+### Vendi Sampling for Molecular Simulations
 
 We provide two files: `Molecular/runAla2.py` & `Molecular/runCLN025.py` for performing Vendi & Replica Sampling systems on the two systems described in our paper.
 
@@ -51,7 +57,7 @@ We also provide two bash scripts for running these simulations with the conditio
 
 We also provide two python scripts for analyzing the results from simulations `Molecular/AnalyzeAla2.py` and `Molecular/AnalyzeCLN025.py`. These scripts produce the dihedral angle & TICA parameter Free Energy surfaces shown in our paper. 
 
-Applying Vendi Simulations on additional Molecular systems outside of those in our paper is also simple. Systems in vacuum can use the Alanine Dipeptide simulation setup, whereas those in implicit solvent can use the Chignolin setup. All one would need to do is define the OpenMM system in either file in the marked location. For example, any system in implicit solvent can be handled using a setup such as 
+Applying Vendi Sampling on additional Molecular systems outside of those in our paper is also simple. Systems in vacuum can use the Alanine Dipeptide simulation setup, whereas those in implicit solvent can use the Chignolin setup. All one would need to do is define the OpenMM system in either file in the marked location. For example, any system in implicit solvent can be handled using a setup such as 
 
 ```
 solv = app.CharmmPsfFile('system/structure_vacuum.psf')
@@ -66,5 +72,9 @@ system = solv.createSystem(params, nonbondedMethod=app.NoCutoff,
 ## Citation 
 
 ```
-Pasarkar A, Bencomo G, Olsson S, Dieng AB. Vendi Sampling For Molecular Simulations: Diversity As A Force For Faster Convergence And Better Exploration. ChemRxiv. Cambridge: Cambridge Open Engage; 2023.
+@article{pasarkar2023vendi,
+  title={Vendi Sampling For Molecular Simulations: Diversity As A Force For Faster Convergence And Better Exploration},
+  author={Pasarkar, Amey and Bencomo, Gianluca and Olsson, Simon and Dieng, Adji Bousso},
+  year={2023}
+}
 ```
