@@ -8,7 +8,7 @@ increasing the efficiency and efficacy of the exploration of molecular conformat
 ![](PrinzPotential.gif)
 
 <p style="text-align:center">
-<em>Vendi Sampling enables faster exploration than Replica Sampling<em>
+<em>Vendi Sampling enables faster exploration than Replica Sampling</em>
 </p>
 
 For more information, see [our pre-print on ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/64a2f0abba3e99daef73a144)
