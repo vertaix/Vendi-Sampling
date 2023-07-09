@@ -8,7 +8,7 @@ increasing the efficiency and efficacy of the exploration of molecular conformat
 ![](PrinzPotential.gif)
 
 <p align="center">
-<em>Vendi Sampling enables faster exploration than Replica Sampling</em>
+<em>Vendi Sampling enables efficient exploration of molecular conformation spaces</em>
 </p>
 
 For more information, see [our pre-print on ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/64a2f0abba3e99daef73a144)
@@ -33,14 +33,14 @@ First, define an Energy callable function.
 
 `Model_Systems/model_systems.py` contains classes for the Prinz & Double Well Potential functions. 
 
-```
+```python
 Prinz = PrinzEnergy()
 E = Prinz.energy
 ```
 
 Then, just initialize the positions of the particles, pass in a function for computing the log vendi-score, and then Vendi Sampling can be run!
 
-```
+```python
 replicas = 8
 dim = 1
 x_init = torch.rand((replicas, dim), requires_grad=True) 
@@ -59,7 +59,7 @@ We also provide two python scripts for analyzing the results from simulations `M
 
 Applying Vendi Sampling on additional Molecular systems outside of those in our paper is also simple. Systems in vacuum can use the Alanine Dipeptide simulation setup, whereas those in implicit solvent can use the Chignolin setup. All one would need to do is define the OpenMM system in either file in the marked location. For example, any system in implicit solvent can be handled using a setup such as 
 
-```
+```python
 solv = app.CharmmPsfFile('system/structure_vacuum.psf')
 crds = app.PDBFile("system/structure_vaccum.pdb")
 system = solv.createSystem(params, nonbondedMethod=app.NoCutoff,
@@ -71,7 +71,7 @@ system = solv.createSystem(params, nonbondedMethod=app.NoCutoff,
 
 ## Citation 
 
-```
+```bibtex
 @article{pasarkar2023vendi,
   title={Vendi Sampling For Molecular Simulations: Diversity As A Force For Faster Convergence And Better Exploration},
   author={Pasarkar, Amey and Bencomo, Gianluca and Olsson, Simon and Dieng, Adji Bousso},
