@@ -7,7 +7,7 @@ increasing the efficiency and efficacy of the exploration of molecular conformat
 
 ![](PrinzPotential.gif)
 
-<p style="text-align:center">
+<p align="center">
 <em>Vendi Sampling enables faster exploration than Replica Sampling</em>
 </p>
 
