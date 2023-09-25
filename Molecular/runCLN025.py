@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 
 class VendiModule(torch.nn.Module):
 
-    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, offset=0):
+    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, gamma=1.,offset=0):
         super().__init__()
         self.n_replicas = n_replicas
         self.n_particles = n_particles
@@ -19,6 +19,7 @@ class VendiModule(torch.nn.Module):
         self.device = device
         self.current_step = torch.tensor(0.0)
         self.stop = torch.tensor(stop)
+        self.gamma = gamma
         self.offset = offset
     def getInvariant(self, positions):
         new_pos = torch.zeros(self.n_replicas, 1, self.n_particles*3)
@@ -59,7 +60,7 @@ class VendiModule(torch.nn.Module):
         positions = positions.reshape(self.n_replicas, self.n_particles * 3)
         samples1 = torch.unsqueeze(positions, 0)
         samples2 = torch.unsqueeze(positions, 1)
-        return torch.exp(-torch.norm(samples1 - samples2, p=2, dim=2) ** 2)
+        return torch.exp(-self.gamma*torch.norm(samples1 - samples2, p=2, dim=2) ** 2)
     
     
     def VS(self, positions):
@@ -71,9 +72,8 @@ class VendiModule(torch.nn.Module):
         
         p_ = w[w>0]
         entropy_q = -(p_ * torch.log(p_)).sum()
-        res = torch.exp(entropy_q)
 
-        return res
+        return entropy_q
 
     def forward(self, positions):
         #nu is the step-size for the vendi-force relative to the energy force
@@ -88,7 +88,7 @@ class VendiModule(torch.nn.Module):
             return -self.nu*self.VS(positions)
 
 def main(simu_time: float = 50, recording_interval: float = 0.2,
-        temperature: float = 350, nu: float = 100., replicas: int = 32, stop : int = 1000, 
+        temperature: float = 350, nu: float = 100., replicas: int = 32, stop : int = 1000, gamma : float=1.,
         vendi: bool = False, verbose: bool = True, 
         output_path: str = './output', part: int=0):
     '''
@@ -103,7 +103,8 @@ def main(simu_time: float = 50, recording_interval: float = 0.2,
     temperature: Tempurature in Kelvin 
     nu: Vendi Force Coefficient 
     replicas: Number of parallel replicas used in simulation
-    
+    gamma: RBF bandwidth parameter
+
     vendi: boolean flag for if the Vendi Force can be applied
     
     output_path: Defines prefix for where files are saved
@@ -154,7 +155,7 @@ def main(simu_time: float = 50, recording_interval: float = 0.2,
         n_particles = len(pos)
         # Render the compute graph to a TorchScript module
 
-        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, offset=offset))
+        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, gamma=gamma, offset=offset))
         # Serialize the compute graph to a file
         module.save(MODEL_PATH)
         force = TorchForce(MODEL_PATH)

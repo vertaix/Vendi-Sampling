@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 
 class VendiModule(torch.nn.Module):
 
-    def __init__(self, n_replicas, n_particles, device, nu, stop=1000):
+    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, gamma=1.):
         super().__init__()
         self.n_replicas = n_replicas
         self.n_particles = n_particles
@@ -19,7 +19,7 @@ class VendiModule(torch.nn.Module):
         self.device = device
         self.current_step = torch.tensor(0.0)
         self.stop = torch.tensor(stop)
-
+        self.gamma = gamma
     def getInvariant(self, positions):
         new_pos = torch.zeros(self.n_replicas, 1, self.n_particles*3)
         for i in range(len(positions)):
@@ -59,7 +59,7 @@ class VendiModule(torch.nn.Module):
         positions = positions.reshape(self.n_replicas, self.n_particles * 3)
         samples1 = torch.unsqueeze(positions, 0)
         samples2 = torch.unsqueeze(positions, 1)
-        return torch.exp(-torch.norm(samples1 - samples2, p=2, dim=2) ** 2)
+        return torch.exp(-self.gamma*torch.norm(samples1 - samples2, p=2, dim=2) ** 2)
     
     
     def VS(self, positions):
@@ -71,23 +71,22 @@ class VendiModule(torch.nn.Module):
         
         p_ = w[w>0]
         entropy_q = -(p_ * torch.log(p_)).sum()
-        res = torch.exp(entropy_q)
 
-        return res
+        return entropy_q
 
     def forward(self, positions):
         #nu is the step-size for the vendi-force relative to the energy force
         positions = positions.reshape(self.n_replicas, -1, 3)
-        # anneal for next time step
+        # tracking time step
         self.current_step += torch.tensor(1.0)
-        if self.stop < self.current_step:
+        if self.stop <= self.current_step:
             return torch.sum(positions * 0.0) # returns grad = 0
         else:
-            return -self.nu*self.VS(positions)#*(1-self.current_step/self.stop) #added last term for annealing
+            return -self.nu*self.VS(positions)
 
 def main(simu_time: float = 50, recording_interval: float = 0.1,
         exchange_interval: float = 0.0, temperature: float = 300.15, nu: float = 100.,
-        replicas: int = 32, output_path: str = './output', stop : int = 1000, 
+        replicas: int = 32, output_path: str = './output', stop : int = 1000, gamma: float=1.,
         vendi: bool = False, verbose: bool = True, part: int=0,):
     '''
     Code for generating simulations of Alanine Dipeptide (Ala2) in vacuum
@@ -101,6 +100,7 @@ def main(simu_time: float = 50, recording_interval: float = 0.1,
     temperature: Tempurature in Kelvin 
     nu: Vendi Force Coefficient 
     stop: # of steps the Vendi Force Applied for
+    gamma: RBF bandwidth parameter
     
     replicas: Number of parallel replicas used in simulation
     
@@ -147,7 +147,7 @@ def main(simu_time: float = 50, recording_interval: float = 0.1,
         n_particles = len(pos)
         # Render the compute graph to a TorchScript module
 
-        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop))
+        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, gamma=gamma))
         # Serialize the compute graph to a file
         module.save(MODEL_PATH)
         force = TorchForce(MODEL_PATH)
