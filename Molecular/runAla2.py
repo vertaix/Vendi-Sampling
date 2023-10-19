@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 
 class VendiModule(torch.nn.Module):
 
-    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, gamma=1.):
+    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, gamma=1., q=1.):
         super().__init__()
         self.n_replicas = n_replicas
         self.n_particles = n_particles
@@ -20,6 +20,8 @@ class VendiModule(torch.nn.Module):
         self.current_step = torch.tensor(0.0)
         self.stop = torch.tensor(stop)
         self.gamma = gamma
+        self.q = q
+        print(self.q)
     def getInvariant(self, positions):
         new_pos = torch.zeros(self.n_replicas, 1, self.n_particles*3)
         for i in range(len(positions)):
@@ -70,7 +72,12 @@ class VendiModule(torch.nn.Module):
         w, _ = torch.linalg.eigh(K_)
         
         p_ = w[w>0]
-        entropy_q = -(p_ * torch.log(p_)).sum()
+        if self.q==1:
+            entropy_q = -(p_ * torch.log(p_)).sum()
+        elif self.q == -1: #-1 q corresponds to q=inf
+            entropy_q = -torch.log(torch.max(p_))
+        else:
+            entropy_q = torch.log((p_ ** self.q).sum()) / (1 - self.q)
 
         return entropy_q
 
@@ -87,7 +94,7 @@ class VendiModule(torch.nn.Module):
 def main(simu_time: float = 50, recording_interval: float = 0.1,
         exchange_interval: float = 0.0, temperature: float = 300.15, nu: float = 100.,
         replicas: int = 32, output_path: str = './output', stop : int = 1000, gamma: float=1.,
-        vendi: bool = False, verbose: bool = True, part: int=0,):
+        vendi: bool = False, verbose: bool = True, part: int=0, q: float=1.):
     '''
     Code for generating simulations of Alanine Dipeptide (Ala2) in vacuum
     New systems in vacuum can be simulated by adding system files to 'system' directory
@@ -105,9 +112,11 @@ def main(simu_time: float = 50, recording_interval: float = 0.1,
     replicas: Number of parallel replicas used in simulation
     
     vendi: boolean flag for if the Vendi Force can be applied
+    q: Order of Vendi Score (Use q=-1 if you want q='inf')
     
     output_path: Defines prefix for where files are saved
     part: If nonzero, loads the initial position from last sample in an earlier simulation (searches in output_path directory)
+    
     '''
 
     system = 'alanine-dipeptide'
@@ -147,7 +156,7 @@ def main(simu_time: float = 50, recording_interval: float = 0.1,
         n_particles = len(pos)
         # Render the compute graph to a TorchScript module
 
-        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, gamma=gamma))
+        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, gamma=gamma, q=q))
         # Serialize the compute graph to a file
         module.save(MODEL_PATH)
         force = TorchForce(MODEL_PATH)

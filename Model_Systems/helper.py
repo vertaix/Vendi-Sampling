@@ -6,27 +6,29 @@ from typing import Callable
 from vendi import log_score
 import pickle as pkl
 
+class lv_loss:
+    def __init__(self, q=1.):
+        self.q = q
+    def loss(self, x):
+        def sim(samples):
+            #choice of similarity measure - using broadcasting to speed things up
+            if samples.dim()==1:
+                #if we have one-dimensional inputs, use following code
+                samples1 = torch.unsqueeze(samples,0)
+                samples2 = torch.unsqueeze(samples,1)
 
-def logvendi_loss(x):
-    def sim(samples):
-        #choice of similarity measure - using broadcasting to speed things up
-        if samples.dim()==1:
-            #if we have one-dimensional inputs, use following code
-            samples1 = torch.unsqueeze(samples,0)
-            samples2 = torch.unsqueeze(samples,1)
+                K = 1. - torch.abs(samples1-samples2)/(torch.abs(samples1)+torch.abs(samples2))
+                return K
+            else:
+                samples1 = torch.unsqueeze(samples,0)
+                samples2 = torch.unsqueeze(samples,1)
+                #samples-samples2 is of the shape (nsamples nsamples, dimension of input).
+                #We want the l1 norm over the last part - the input dimension (so use dim=2)
+                K = 1. - torch.norm(samples1-samples2, p=1, dim=2)/(torch.norm(samples1, p=1, dim=2)+torch.norm(samples2, p=1, dim=2))
+                return K
+        return log_score(x, sim, q=self.q)
 
-            K = 1. - torch.abs(samples1-samples2)/(torch.abs(samples1)+torch.abs(samples2))
-            return K
-        else:
-            samples1 = torch.unsqueeze(samples,0)
-            samples2 = torch.unsqueeze(samples,1)
-            #samples-samples2 is of the shape (nsamples nsamples, dimension of input).
-            #We want the l1 norm over the last part - the input dimension (so use dim=2)
-            K = 1. - torch.norm(samples1-samples2, p=1, dim=2)/(torch.norm(samples1, p=1, dim=2)+torch.norm(samples2, p=1, dim=2))
-            return K
-    return log_score(x, sim)
-
-def resample(samples, weights, energy):
+def resample(samples, weights, energy, logvendi_loss):
     weights = weights.flatten()
     samples = samples.reshape(-1, samples.shape[-1])
     weights = weights/weights.sum()

@@ -12,7 +12,7 @@ import pickle as pkl
 
 def main(E: str = 'PrinzEnergy', seed: int = 100, dim: int = 1, eta: float = 5e-5,
          hyperopt: bool = False, nu: float  = 4e-3, stop: int = 100, replicas: int = 32, steps: int = 10000, 
-        reproductions: int = 10):
+        reproductions: int = 10, q: float = 1.):
     assert E in ['PrinzEnergy', 'DoubleWell'], 'Unknown Energy Function.'
     
     '''
@@ -31,6 +31,7 @@ def main(E: str = 'PrinzEnergy', seed: int = 100, dim: int = 1, eta: float = 5e-
     replicas: Number of simulation replicas
     steps: Number of steps in the simulation  
     Reproductions: Number of trials
+    q: Order of Vendi Score (Use q=-1 if you want q='inf')
     '''
     
     # init seeds
@@ -57,6 +58,10 @@ def main(E: str = 'PrinzEnergy', seed: int = 100, dim: int = 1, eta: float = 5e-
         replica.append(replica_res)
         print(f'Replica Run-Time (iter {i+1} / {reproductions}): {time.time() - start:.2f}')
 
+    if q<0:
+        q='inf'
+    logvendi_loss = lv_loss(q=q).loss
+    
     # re-init seeds
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -74,7 +79,7 @@ def main(E: str = 'PrinzEnergy', seed: int = 100, dim: int = 1, eta: float = 5e-
         for s in stops:
             for b in nu_coeff:
                 res, weights = VendiSamp(E.energy, logvendi_loss, min(2000,steps), x_init, eta=eta, nu=eta*b, stop=s)
-                vs, avg_energy = resample(res, weights, E.energy)
+                vs, avg_energy = resample(res, weights, E.energy, logvendi_loss)
                 if vs-2*avg_energy>best_score:
                     best_stop,best_nu =s,eta*b
         nu = best_nu

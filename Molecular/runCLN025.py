@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 
 class VendiModule(torch.nn.Module):
 
-    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, gamma=1.,offset=0):
+    def __init__(self, n_replicas, n_particles, device, nu, stop=1000, gamma=1.,offset=0, q=1.):
         super().__init__()
         self.n_replicas = n_replicas
         self.n_particles = n_particles
@@ -21,6 +21,8 @@ class VendiModule(torch.nn.Module):
         self.stop = torch.tensor(stop)
         self.gamma = gamma
         self.offset = offset
+        self.q=q
+        print(q)
     def getInvariant(self, positions):
         new_pos = torch.zeros(self.n_replicas, 1, self.n_particles*3)
         for i in range(len(positions)):
@@ -71,7 +73,12 @@ class VendiModule(torch.nn.Module):
         w, _ = torch.linalg.eigh(K_)
         
         p_ = w[w>0]
-        entropy_q = -(p_ * torch.log(p_)).sum()
+        if self.q==1:
+            entropy_q = -(p_ * torch.log(p_)).sum()
+        elif self.q == -1: #-1 q corresponds to q=inf
+            entropy_q = -torch.log(torch.max(p_))
+        else:
+            entropy_q = torch.log((p_ ** self.q).sum()) / (1 - self.q)
 
         return entropy_q
 
@@ -90,7 +97,7 @@ class VendiModule(torch.nn.Module):
 def main(simu_time: float = 50, recording_interval: float = 0.2,
         temperature: float = 350, nu: float = 100., replicas: int = 32, stop : int = 1000, gamma : float=1.,
         vendi: bool = False, verbose: bool = True, 
-        output_path: str = './output', part: int=0):
+        output_path: str = './output', part: int=0, q: float=1.):
     '''
     Code for generating simulations of Chignolin (CLN025) in implicit solvent
     New systems in implicit solvent can be simulated by adding system files to 'system' directory
@@ -155,7 +162,7 @@ def main(simu_time: float = 50, recording_interval: float = 0.2,
         n_particles = len(pos)
         # Render the compute graph to a TorchScript module
 
-        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, gamma=gamma, offset=offset))
+        module = torch.jit.script(VendiModule(replicas, n_particles, nu=torch.tensor(nu), device=device, stop=stop, gamma=gamma, offset=offset, q=q))
         # Serialize the compute graph to a file
         module.save(MODEL_PATH)
         force = TorchForce(MODEL_PATH)
