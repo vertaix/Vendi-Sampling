@@ -11,7 +11,7 @@ increasing the efficiency and efficacy of the exploration of molecular conformat
 <em>Vendi Sampling enables efficient exploration of molecular conformation spaces</em>
 </p>
 
-For more information, see [our pre-print on ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/64a2f0abba3e99daef73a144)
+For more information, see [our publication in JCP](https://pubs.aip.org/aip/jcp/article/159/14/144108/2916208/Vendi-sampling-for-molecular-simulations-Diversity)
 
 ## Installation
 
@@ -41,11 +41,14 @@ E = Prinz.energy
 Then, just initialize the positions of the particles, pass in a function for computing the log vendi-score, and then Vendi Sampling can be run!
 
 ```python
+logvendi_loss = lv_loss(q=1.).loss
 replicas = 8
 dim = 1
 x_init = torch.rand((replicas, dim), requires_grad=True) 
 samples, weights = VendiSamp(E, logvendi_loss, steps=10000, x_init=x_init)
 ```
+
+The choice of $q$ determines the order of the Vendi Score. 
 
 In `Model_Systems/main.py` we perform hyperparameter optimization. 
 
@@ -73,8 +76,12 @@ system = solv.createSystem(params, nonbondedMethod=app.NoCutoff,
 
 ```bibtex
 @article{pasarkar2023vendi,
-  title={Vendi Sampling For Molecular Simulations: Diversity As A Force For Faster Convergence And Better Exploration},
-  author={Pasarkar, Amey and Bencomo, Gianluca and Olsson, Simon and Dieng, Adji Bousso},
-  year={2023}
+  title={Vendi sampling for molecular simulations: Diversity as a force for faster convergence and better exploration},
+  author={Pasarkar, Amey P and Bencomo, Gianluca M and Olsson, Simon and Dieng, Adji Bousso},
+  journal={The Journal of Chemical Physics},
+  volume={159},
+  number={14},
+  year={2023},
+  publisher={AIP Publishing}
 }
 ```
