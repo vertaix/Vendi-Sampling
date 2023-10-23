@@ -48,7 +48,7 @@ x_init = torch.rand((replicas, dim), requires_grad=True)
 samples, weights = VendiSamp(E, logvendi_loss, steps=10000, x_init=x_init)
 ```
 
-The choice of $q$ determines the order of the Vendi Score. 
+The choice of $q$ determines the order of the Vendi Score. See [our pre-print](https://arxiv.org/abs/2310.12952) describing the behavior of the Vendi Score with different orders $q$ 
 
 In `Model_Systems/main.py` we perform hyperparameter optimization. 
 
@@ -83,5 +83,14 @@ system = solv.createSystem(params, nonbondedMethod=app.NoCutoff,
   number={14},
   year={2023},
   publisher={AIP Publishing}
+}
+```
+
+```bibtex
+@article{pasarkar2023cousins,
+      title={Cousins Of The Vendi Score: A Family Of Similarity-Based Diversity Metrics For Science And Machine Learning}, 
+      author={Pasarkar, Amey P and Dieng, Adji Bousso},
+      journal={arXiv preprint arXiv:2310.12952},
+      year={2023},
 }
 ```
