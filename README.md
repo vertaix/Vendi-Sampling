@@ -3,7 +3,7 @@
 ## Overview
 
 This repository contains the implementation of Vendi Sampling, a method for 
-increasing the efficiency and efficacy of the exploration of molecular conformation spaces. In Vendi sampling, molecular replicas are simulated in parallel and coupled via a global statistical measure, the Vendi Score, to enhance diversity.
+increasing the efficiency and efficacy of the exploration of molecular conformation spaces. In Vendi sampling, molecular replicas are simulated in parallel and coupled via a global statistical measure, the [Vendi Score](https://github.com/vertaix/Vendi-Score/tree/main), to enhance diversity.
 
 ![](PrinzPotential.gif)
 
@@ -48,7 +48,7 @@ x_init = torch.rand((replicas, dim), requires_grad=True)
 samples, weights = VendiSamp(E, logvendi_loss, steps=10000, x_init=x_init)
 ```
 
-The choice of $q$ determines the order of the Vendi Score. See [our pre-print](https://arxiv.org/abs/2310.12952) describing the behavior of the Vendi Score with different orders $q$ 
+The choice of $q$ determines the order of the Vendi Score. See [our paper](https://arxiv.org/abs/2310.12952) describing the behavior of the Vendi Score with different orders $q$ 
 
 In `Model_Systems/main.py` we perform hyperparameter optimization. 
 
@@ -87,10 +87,22 @@ system = solv.createSystem(params, nonbondedMethod=app.NoCutoff,
 ```
 
 ```bibtex
-@article{pasarkar2023cousins,
-      title={Cousins Of The Vendi Score: A Family Of Similarity-Based Diversity Metrics For Science And Machine Learning}, 
-      author={Pasarkar, Amey P and Dieng, Adji Bousso},
-      journal={arXiv preprint arXiv:2310.12952},
-      year={2023},
+@article{friedman2023vendi,
+  title={The Vendi Score: A Diversity Evaluation Metric for Machine Learning},
+  author={Friedman, Dan and Dieng, Adji Bousso},
+  journal={Transactions on Machine Learning Research},
+  issn={2835-8856},
+  year={2023}
+}
+```
+
+```bibtex
+@inproceedings{pasarkar2024cousins,
+  title={Cousins Of The Vendi Score: A Family Of Similarity-Based Diversity Metrics For Science And Machine Learning},
+  author={Pasarkar, Amey P and Dieng, Adji Bousso},
+  booktitle={International Conference on Artificial Intelligence and Statistics},
+  pages={3808--3816},
+  year={2024},
+  organization={PMLR}
 }
 ```
